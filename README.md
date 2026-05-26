@@ -9,7 +9,7 @@
 
 ## デモURL
 
-https://あなたのGitHubユーザー名.github.io/offline-asset-life-simulator/
+https://haru-dev-git.github.io/offline-asset-life-simulator/
 
 ## 使用技術
 
