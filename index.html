@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>オフライン資産寿命シミュレーター</title>
+
+  <style>
+    /* =========================================================
+      オフライン資産寿命シミュレーター
+      HTML / CSS / JavaScript だけで動く1ファイルアプリ
+    ========================================================= */
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+      line-height: 1.6;
+    }
+
+    header {
+      background: linear-gradient(135deg, #1e3a8a, #2563eb);
+      color: white;
+      padding: 28px 20px;
+    }
+
+    header .inner,
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-left: 5px solid #2563eb;
+      padding-left: 10px;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    main {
+      padding: 20px;
+    }
+
+    .notice {
+      background: #fff7ed;
+      border: 1px solid #fb923c;
+      color: #7c2d12;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 18px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+      margin-bottom: 18px;
+    }
+
+    .form-section {
+      border-top: 1px solid #e5e7eb;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 0.4fr;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input:focus {
+      outline: 2px solid rgba(37, 99, 235, 0.25);
+      border-color: #2563eb;
+    }
+
+    .unit {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .help {
+      color: #6b7280;
+      font-size: 12px;
+      margin-top: -4px;
+    }
+
+    .buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .btn-primary {
+      background: #2563eb;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1d4ed8;
+    }
+
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-secondary:hover {
+      background: #d1d5db;
+    }
+
+    .error-box {
+      display: none;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      color: #991b1b;
+      border-radius: 10px;
+      padding: 12px;
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .error-box ul {
+      margin: 6px 0 0 18px;
+      padding: 0;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 12px;
+      background: #f9fafb;
+    }
+
+    .metric .label {
+      color: #6b7280;
+      font-size: 13px;
+    }
+
+    .metric .value {
+      font-size: 22px;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .success-text {
+      color: #047857;
+    }
+
+    .danger-text {
+      color: #dc2626;
+    }
+
+    canvas {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 900px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 8px 10px;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #eef2ff;
+      color: #111827;
+    }
+
+    th:first-child,
+    td:first-child,
+    td.state,
+    td.status {
+      text-align: center;
+    }
+
+    tr.bankrupt-row {
+      background: #fef2f2;
+    }
+
+    .model-note {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    footer {
+      color: #6b7280;
+      text-align: center;
+      padding: 30px 20px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="inner">
+      <h1>オフライン資産寿命シミュレーター</h1>
+      <p>4%ルール・インフレ・株価ショックをブラウザ上で簡易シミュレーションします。</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="notice">
+      <strong>注意：</strong>
+      このアプリは卒論・学習用の簡易シミュレーターです。
+      実際の投資判断や金融助言を目的としたものではありません。
+      乱数を使うため、同じ条件でも実行するたびに結果が変わります。
+    </div>
+
+    <div class="grid">
+      <!-- 入力エリア -->
+      <section class="card">
+        <h2>1. 入力条件</h2>
+
+        <div class="form-section">
+          <h3>基本条件</h3>
+
+          <div class="form-row">
+            <label for="initialAsset">初期資産</label>
+            <input id="initialAsset" type="number" value="100000000" min="1" step="10000" />
+            <span class="unit">円</span>
+          </div>
+
+          <div class="form-row">
+            <label for="initialLivingCost">初年度生活費</label>
+            <input id="initialLivingCost" type="number" value="4000000" min="1" step="10000" />
+            <span class="unit">円</span>
+          </div>
+
+          <div class="form-row">
+            <label for="years">運用年数</label>
+            <input id="years" type="number" value="30" min="1" step="1" />
+            <span class="unit">年</span>
+          </div>
+
+          <div class="form-row">
+            <label for="trials">試行回数</label>
+            <input id="trials" type="number" value="10000" min="1" step="1" />
+            <span class="unit">回</span>
+          </div>
+
+          <p class="help">動作確認では最初に100〜1000回で試すと安全です。</p>
+        </div>
+
+        <div class="form-section">
+          <h3>通常時条件</h3>
+
+          <div class="form-row">
+            <label for="normalReturnRate">通常時リターン</label>
+            <input id="normalReturnRate" type="number" value="5" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+
+          <div class="form-row">
+            <label for="normalInflationRate">通常時インフレ率</label>
+            <input id="normalInflationRate" type="number" value="2" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>株価ショック条件</h3>
+
+          <div class="form-row">
+            <label for="stockShockProbability">株価ショック発生確率</label>
+            <input id="stockShockProbability" type="number" value="10" min="0" max="100" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+
+          <div class="form-row">
+            <label for="stockShockReturnRate">株価ショック時リターン</label>
+            <input id="stockShockReturnRate" type="number" value="-25" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>インフレショック条件</h3>
+
+          <div class="form-row">
+            <label for="inflationShockProbability">インフレショック発生確率</label>
+            <input id="inflationShockProbability" type="number" value="10" min="0" max="100" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+
+          <div class="form-row">
+            <label for="inflationShockRate">ショック時インフレ率</label>
+            <input id="inflationShockRate" type="number" value="6" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+
+          <div class="form-row">
+            <label for="inflationContinueProbability">ショック継続確率</label>
+            <input id="inflationContinueProbability" type="number" value="70" min="0" max="100" step="0.1" />
+            <span class="unit">%</span>
+          </div>
+
+          <p class="help">一度インフレショックが起きた後、翌年も続く確率です。</p>
+        </div>
+
+        <div class="buttons">
+          <button class="btn-primary" id="runButton">シミュレーション実行</button>
+          <button class="btn-secondary" id="sampleButton">サンプル1回だけ実行</button>
+          <button class="btn-secondary" id="resetButton">入力値をリセット</button>
+          <button class="btn-secondary" id="clearButton">結果をクリア</button>
+        </div>
+
+        <div id="errorBox" class="error-box"></div>
+      </section>
+
+      <!-- 結果概要・グラフエリア -->
+      <section>
+        <div class="card">
+          <h2>2. 結果概要</h2>
+
+          <div class="summary-grid">
+            <div class="metric">
+              <div class="label">成功率</div>
+              <div id="successRate" class="value success-text">-</div>
+            </div>
+
+            <div class="metric">
+              <div class="label">破綻率</div>
+              <div id="failureRate" class="value danger-text">-</div>
+            </div>
+
+            <div class="metric">
+              <div class="label">平均最終資産</div>
+              <div id="averageFinalAsset" class="value">-</div>
+            </div>
+
+            <div class="metric">
+              <div class="label">最短破綻年</div>
+              <div id="earliestBankruptYear" class="value">-</div>
+            </div>
+          </div>
+
+          <p id="summaryText" class="model-note">まだ実行されていません。</p>
+        </div>
+
+        <div class="card">
+          <h2>3. 簡易グラフ</h2>
+          <p class="model-note">サンプル1回分の年末資産を折れ線で表示します。</p>
+          <canvas id="assetChart" width="900" height="360"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <!-- 年次テーブル -->
+    <section class="card">
+      <h2>4. 年次テーブル</h2>
+      <p class="model-note">
+        サンプル1回分の年ごとの計算結果です。
+        破綻した場合は、その年で表示が止まります。
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>年</th>
+              <th>年初資産</th>
+              <th>生活費</th>
+              <th>インフレ状態</th>
+              <th>適用インフレ率</th>
+              <th>株価状態</th>
+              <th>適用リターン</th>
+              <th>年末資産</th>
+              <th>判定</th>
+            </tr>
+          </thead>
+
+          <tbody id="resultTableBody">
+            <tr>
+              <td colspan="9" style="text-align:center;">まだ結果はありません。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>5. モデル説明</h2>
+      <p class="model-note">
+        このアプリでは、1年目は初年度生活費をそのまま取り崩し、
+        2年目以降はインフレ率に応じて生活費を増やします。
+        毎年、株価ショックとインフレショックを乱数で判定します。
+        資産が0円以下になった時点で破綻とします。
+      </p>
+    </section>
+  </main>
+
+  <footer>
+    オフライン資産寿命シミュレーター / HTML・CSS・JavaScriptのみで動作
+  </footer>
+
+  <script>
+    "use strict";
+
+    /* =========================================================
+      1. 初期値
+      リセットボタンを押したとき、この値に戻します。
+    ========================================================= */
+    const DEFAULT_VALUES = {
+      initialAsset: 100000000,
+      initialLivingCost: 4000000,
+      years: 30,
+      trials: 10000,
+      normalReturnRate: 5,
+      normalInflationRate: 2,
+      stockShockProbability: 10,
+      stockShockReturnRate: -25,
+      inflationShockProbability: 10,
+      inflationShockRate: 6,
+      inflationContinueProbability: 70
+    };
+
+    /* =========================================================
+      2. HTML要素の取得
+      JavaScriptから画面の入力欄・表示欄を操作するために使います。
+    ========================================================= */
+    const elements = {
+      initialAsset: document.getElementById("initialAsset"),
+      initialLivingCost: document.getElementById("initialLivingCost"),
+      years: document.getElementById("years"),
+      trials: document.getElementById("trials"),
+      normalReturnRate: document.getElementById("normalReturnRate"),
+      normalInflationRate: document.getElementById("normalInflationRate"),
+      stockShockProbability: document.getElementById("stockShockProbability"),
+      stockShockReturnRate: document.getElementById("stockShockReturnRate"),
+      inflationShockProbability: document.getElementById("inflationShockProbability"),
+      inflationShockRate: document.getElementById("inflationShockRate"),
+      inflationContinueProbability: document.getElementById("inflationContinueProbability"),
+
+      runButton: document.getElementById("runButton"),
+      sampleButton: document.getElementById("sampleButton"),
+      resetButton: document.getElementById("resetButton"),
+      clearButton: document.getElementById("clearButton"),
+
+      errorBox: document.getElementById("errorBox"),
+      successRate: document.getElementById("successRate"),
+      failureRate: document.getElementById("failureRate"),
+      averageFinalAsset: document.getElementById("averageFinalAsset"),
+      earliestBankruptYear: document.getElementById("earliestBankruptYear"),
+      summaryText: document.getElementById("summaryText"),
+      resultTableBody: document.getElementById("resultTableBody"),
+      assetChart: document.getElementById("assetChart")
+    };
+
+    /* =========================================================
+      3. 表示用の便利関数
+    ========================================================= */
+
+    // 金額を「12,345円」のように表示します。
+    function formatYen(value) {
+      if (!Number.isFinite(value)) return "-";
+      return Math.round(value).toLocaleString("ja-JP") + "円";
+    }
+
+    // 率を「12.3%」のように表示します。
+    function formatPercent(value, digits = 1) {
+      if (!Number.isFinite(value)) return "-";
+      return value.toFixed(digits) + "%";
+    }
+
+    // 確率判定用の関数です。
+    // probability = 0.10 なら、おおよそ10%の確率で true になります。
+    function happens(probability) {
+      return Math.random() < probability;
+    }
+
+    /* =========================================================
+      4. 入力値を取得する
+      画面では「5%」を 5 と入力しますが、
+      計算では 0.05 として使うため、100で割ります。
+    ========================================================= */
+    function getSettingsFromInputs() {
+      return {
+        initialAsset: Number(elements.initialAsset.value),
+        initialLivingCost: Number(elements.initialLivingCost.value),
+        years: Number(elements.years.value),
+        trials: Number(elements.trials.value),
+
+        normalReturnRate: Number(elements.normalReturnRate.value) / 100,
+        normalInflationRate: Number(elements.normalInflationRate.value) / 100,
+
+        stockShockProbability: Number(elements.stockShockProbability.value) / 100,
+        stockShockReturnRate: Number(elements.stockShockReturnRate.value) / 100,
+
+        inflationShockProbability: Number(elements.inflationShockProbability.value) / 100,
+        inflationShockRate: Number(elements.inflationShockRate.value) / 100,
+        inflationContinueProbability: Number(elements.inflationContinueProbability.value) / 100
+      };
+    }
+
+    /* =========================================================
+      5. 入力値チェック
+      不正な入力なら計算せず、エラーを表示します。
+    ========================================================= */
+    function validateSettings(settings) {
+      const errors = [];
+
+      function isBlank(inputElement) {
+        return inputElement.value.trim() === "";
+      }
+
+      if (isBlank(elements.initialAsset)) errors.push("初期資産を入力してください。");
+      if (isBlank(elements.initialLivingCost)) errors.push("初年度生活費を入力してください。");
+      if (isBlank(elements.years)) errors.push("運用年数を入力してください。");
+      if (isBlank(elements.trials)) errors.push("試行回数を入力してください。");
+
+      for (const value of Object.values(settings)) {
+        if (!Number.isFinite(value)) {
+          errors.push("入力値には数値を入力してください。");
+          break;
+        }
+      }
+
+      if (settings.initialAsset <= 0) {
+        errors.push("初期資産は1円以上で入力してください。");
+      }
+
+      if (settings.initialLivingCost <= 0) {
+        errors.push("初年度生活費は1円以上で入力してください。");
+      }
+
+      if (settings.years < 1 || !Number.isInteger(settings.years)) {
+        errors.push("運用年数は1以上の整数で入力してください。");
+      }
+
+      if (settings.trials < 1 || !Number.isInteger(settings.trials)) {
+        errors.push("試行回数は1以上の整数で入力してください。");
+      }
+
+      // ブラウザが固まりにくいよう、上限を設定しています。
+      if (settings.years > 100) {
+        errors.push("運用年数は100年以下にしてください。");
+      }
+
+      if (settings.trials > 100000) {
+        errors.push("試行回数は100,000回以下にしてください。");
+      }
+
+      if (settings.normalReturnRate < -1) {
+        errors.push("通常時リターンは-100%以上で入力してください。");
+      }
+
+      if (settings.stockShockReturnRate < -1) {
+        errors.push("株価ショック時リターンは-100%以上で入力してください。");
+      }
+
+      if (settings.normalInflationRate < -1) {
+        errors.push("通常時インフレ率は-100%以上で入力してください。");
+      }
+
+      if (settings.inflationShockRate < -1) {
+        errors.push("ショック時インフレ率は-100%以上で入力してください。");
+      }
+
+      const probabilities = [
+        ["株価ショック発生確率", settings.stockShockProbability],
+        ["インフレショック発生確率", settings.inflationShockProbability],
+        ["ショック継続確率", settings.inflationContinueProbability]
+      ];
+
+      probabilities.forEach(function(item) {
+        const name = item[0];
+        const value = item[1];
+
+        if (value < 0 || value > 1) {
+          errors.push(name + "は0〜100%の範囲で入力してください。");
+        }
+      });
+
+      return errors;
+    }
+
+    function showErrors(errors) {
+      if (errors.length === 0) {
+        elements.errorBox.style.display = "none";
+        elements.errorBox.innerHTML = "";
+        return;
+      }
+
+      elements.errorBox.style.display = "block";
+      elements.errorBox.innerHTML =
+        "<strong>入力内容を確認してください。</strong><ul>" +
+        errors.map(function(error) {
+          return "<li>" + error + "</li>";
+        }).join("") +
+        "</ul>";
+    }
+
+    /* =========================================================
+      6. 1回分の資産寿命シミュレーション
+      この関数が計算ロジックの中心です。
+    ========================================================= */
+    function runSingleSimulation(settings) {
+      let currentAsset = settings.initialAsset;
+      let currentLivingCost = settings.initialLivingCost;
+
+      // インフレショックが現在続いているかどうか
+      let isInflationShock = false;
+
+      // 破綻した年。破綻しなければ null のままです。
+      let bankruptYear = null;
+
+      // 年ごとの結果を保存する配列です。
+      const yearlyResults = [];
+
+      for (let year = 1; year <= settings.years; year++) {
+        const startAsset = currentAsset;
+
+        let inflationState = "初年度";
+        let appliedInflationRate = 0;
+
+        /*
+          1年目は「初年度生活費」をそのまま使います。
+          2年目以降はインフレ率で生活費を増やします。
+        */
+        if (year >= 2) {
+          if (isInflationShock) {
+            // すでにインフレショック中なら、今年も続くか判定します。
+            if (happens(settings.inflationContinueProbability)) {
+              inflationState = "ショック継続";
+              appliedInflationRate = settings.inflationShockRate;
+            } else {
+              isInflationShock = false;
+              inflationState = "通常";
+              appliedInflationRate = settings.normalInflationRate;
+            }
+          } else {
+            // 通常状態なら、新しくインフレショックが起きるか判定します。
+            if (happens(settings.inflationShockProbability)) {
+              isInflationShock = true;
+              inflationState = "ショック発生";
+              appliedInflationRate = settings.inflationShockRate;
+            } else {
+              inflationState = "通常";
+              appliedInflationRate = settings.normalInflationRate;
+            }
+          }
+
+          currentLivingCost = currentLivingCost * (1 + appliedInflationRate);
+        }
+
+        // 生活費を資産から取り崩します。
+        currentAsset = currentAsset - currentLivingCost;
+
+        // 生活費を引いた時点で資産が0円以下なら破綻です。
+        if (currentAsset <= 0) {
+          bankruptYear = year;
+
+          yearlyResults.push({
+            year: year,
+            startAsset: startAsset,
+            livingCost: currentLivingCost,
+            inflationState: inflationState,
+            appliedInflationRate: appliedInflationRate,
+            stockState: "未実施",
+            appliedReturnRate: 0,
+            endAsset: currentAsset,
+            status: "破綻"
+          });
+
+          break;
+        }
+
+        // 株価ショックが起きるか判定します。
+        const isStockShock = happens(settings.stockShockProbability);
+
+        const stockState = isStockShock ? "ショック" : "通常";
+
+        const appliedReturnRate = isStockShock
+          ? settings.stockShockReturnRate
+          : settings.normalReturnRate;
+
+        // 残った資産に運用リターンを反映します。
+        currentAsset = currentAsset * (1 + appliedReturnRate);
+
+        // 運用後に資産が0円以下になった場合も破綻です。
+        if (currentAsset <= 0) {
+          bankruptYear = year;
+
+          yearlyResults.push({
+            year: year,
+            startAsset: startAsset,
+            livingCost: currentLivingCost,
+            inflationState: inflationState,
+            appliedInflationRate: appliedInflationRate,
+            stockState: stockState,
+            appliedReturnRate: appliedReturnRate,
+            endAsset: currentAsset,
+            status: "破綻"
+          });
+
+          break;
+        }
+
+        // 破綻しなかった年の結果を保存します。
+        yearlyResults.push({
+          year: year,
+          startAsset: startAsset,
+          livingCost: currentLivingCost,
+          inflationState: inflationState,
+          appliedInflationRate: appliedInflationRate,
+          stockState: stockState,
+          appliedReturnRate: appliedReturnRate,
+          endAsset: currentAsset,
+          status: "継続"
+        });
+      }
+
+      return {
+        isSuccess: bankruptYear === null,
+        bankruptYear: bankruptYear,
+        finalAsset: currentAsset,
+        yearlyResults: yearlyResults
+      };
+    }
+
+    /* =========================================================
+      7. モンテカルロシミュレーション
+      1回分のシミュレーションを指定回数だけ繰り返します。
+    ========================================================= */
+    function runMonteCarlo(settings) {
+      let successCount = 0;
+      let failureCount = 0;
+      let totalFinalAsset = 0;
+      let earliestBankruptYear = null;
+
+      // 画面表示用に、最初の1回分を保存します。
+      let sampleResult = null;
+
+      for (let i = 0; i < settings.trials; i++) {
+        const result = runSingleSimulation(settings);
+
+        if (sampleResult === null) {
+          sampleResult = result;
+        }
+
+        if (result.isSuccess) {
+          successCount++;
+        } else {
+          failureCount++;
+
+          if (
+            earliestBankruptYear === null ||
+            result.bankruptYear < earliestBankruptYear
+          ) {
+            earliestBankruptYear = result.bankruptYear;
+          }
+        }
+
+        totalFinalAsset += result.finalAsset;
+      }
+
+      return {
+        successCount: successCount,
+        failureCount: failureCount,
+        successRate: successCount / settings.trials * 100,
+        failureRate: failureCount / settings.trials * 100,
+        averageFinalAsset: totalFinalAsset / settings.trials,
+        earliestBankruptYear: earliestBankruptYear,
+        sampleResult: sampleResult
+      };
+    }
+
+    /* =========================================================
+      8. 結果概要の表示
+    ========================================================= */
+    function renderSummary(result, settings) {
+      elements.successRate.textContent = formatPercent(result.successRate);
+      elements.failureRate.textContent = formatPercent(result.failureRate);
+      elements.averageFinalAsset.textContent = formatYen(result.averageFinalAsset);
+
+      elements.earliestBankruptYear.textContent =
+        result.earliestBankruptYear === null
+          ? "破綻なし"
+          : result.earliestBankruptYear + "年目";
+
+      elements.summaryText.textContent =
+        settings.trials.toLocaleString("ja-JP") +
+        "回試行：成功 " +
+        result.successCount.toLocaleString("ja-JP") +
+        "回 / 破綻 " +
+        result.failureCount.toLocaleString("ja-JP") +
+        "回";
+    }
+
+    /* =========================================================
+      9. 年次テーブルの表示
+    ========================================================= */
+    function renderTable(singleResult) {
+      const rows = singleResult.yearlyResults;
+
+      if (rows.length === 0) {
+        elements.resultTableBody.innerHTML =
+          "<tr><td colspan='9' style='text-align:center;'>結果がありません。</td></tr>";
+        return;
+      }
+
+      elements.resultTableBody.innerHTML = rows.map(function(row) {
+        const rowClass = row.status === "破綻" ? " class='bankrupt-row'" : "";
+
+        return `
+          <tr${rowClass}>
+            <td>${row.year}</td>
+            <td>${formatYen(row.startAsset)}</td>
+            <td>${formatYen(row.livingCost)}</td>
+            <td class="state">${row.inflationState}</td>
+            <td>${formatPercent(row.appliedInflationRate * 100)}</td>
+            <td class="state">${row.stockState}</td>
+            <td>${formatPercent(row.appliedReturnRate * 100)}</td>
+            <td>${formatYen(row.endAsset)}</td>
+            <td class="status">${row.status}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    /* =========================================================
+      10. 簡易グラフの描画
+      外部ライブラリを使わず、Canvasで折れ線グラフを描きます。
+    ========================================================= */
+    function drawAssetChart(singleResult) {
+      const canvas = elements.assetChart;
+      const ctx = canvas.getContext("2d");
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // いったん白紙に戻します。
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, width, height);
+
+      const rows = singleResult ? singleResult.yearlyResults : [];
+
+      if (rows.length === 0) {
+        ctx.fillStyle = "#6b7280";
+        ctx.font = "18px sans-serif";
+        ctx.fillText("グラフ表示用の結果がありません。", 30, 60);
+        return;
+      }
+
+      const paddingLeft = 80;
+      const paddingRight = 30;
+      const paddingTop = 30;
+      const paddingBottom = 55;
+
+      const chartWidth = width - paddingLeft - paddingRight;
+      const chartHeight = height - paddingTop - paddingBottom;
+
+      const assetValues = rows.map(function(row) {
+        return Math.max(row.endAsset, 0);
+      });
+
+      const maxAsset = Math.max(...assetValues, 1);
+      const minAsset = 0;
+
+      // 軸
+      ctx.strokeStyle = "#9ca3af";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(paddingLeft, paddingTop);
+      ctx.lineTo(paddingLeft, paddingTop + chartHeight);
+      ctx.lineTo(paddingLeft + chartWidth, paddingTop + chartHeight);
+      ctx.stroke();
+
+      // 横補助線と金額ラベル
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "12px sans-serif";
+      ctx.textAlign = "right";
+
+      for (let i = 0; i <= 4; i++) {
+        const ratio = i / 4;
+        const y = paddingTop + chartHeight - ratio * chartHeight;
+        const value = minAsset + ratio * (maxAsset - minAsset);
+
+        ctx.strokeStyle = "#e5e7eb";
+        ctx.beginPath();
+        ctx.moveTo(paddingLeft, y);
+        ctx.lineTo(paddingLeft + chartWidth, y);
+        ctx.stroke();
+
+        ctx.fillText(
+          Math.round(value / 10000).toLocaleString("ja-JP") + "万円",
+          paddingLeft - 8,
+          y + 4
+        );
+      }
+
+      // 各年の点の座標を作ります。
+      const points = rows.map(function(row, index) {
+        const x = rows.length === 1
+          ? paddingLeft + chartWidth / 2
+          : paddingLeft + index / (rows.length - 1) * chartWidth;
+
+        const y = paddingTop + chartHeight -
+          (Math.max(row.endAsset, 0) - minAsset) /
+          (maxAsset - minAsset || 1) *
+          chartHeight;
+
+        return { x: x, y: y, row: row };
+      });
+
+      // 折れ線
+      ctx.strokeStyle = "#2563eb";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+
+      points.forEach(function(point, index) {
+        if (index === 0) {
+          ctx.moveTo(point.x, point.y);
+        } else {
+          ctx.lineTo(point.x, point.y);
+        }
+      });
+
+      ctx.stroke();
+
+      // 点
+      points.forEach(function(point) {
+        ctx.fillStyle = point.row.status === "破綻" ? "#dc2626" : "#2563eb";
+        ctx.beginPath();
+        ctx.arc(point.x, point.y, 4, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // X軸ラベル
+      ctx.fillStyle = "#6b7280";
+      ctx.textAlign = "center";
+      ctx.font = "12px sans-serif";
+
+      const labelInterval = Math.max(1, Math.ceil(rows.length / 6));
+
+      points.forEach(function(point, index) {
+        if (index % labelInterval === 0 || index === points.length - 1) {
+          ctx.fillText(point.row.year + "年", point.x, paddingTop + chartHeight + 25);
+        }
+      });
+
+      // タイトル
+      ctx.fillStyle = "#111827";
+      ctx.textAlign = "left";
+      ctx.font = "16px sans-serif";
+      ctx.fillText("サンプル資産推移：年末資産", paddingLeft, 20);
+    }
+
+    /* =========================================================
+      11. ボタン処理
+    ========================================================= */
+
+    function executeMonteCarlo() {
+      const settings = getSettingsFromInputs();
+      const errors = validateSettings(settings);
+
+      showErrors(errors);
+
+      if (errors.length > 0) {
+        return;
+      }
+
+      const result = runMonteCarlo(settings);
+
+      renderSummary(result, settings);
+      renderTable(result.sampleResult);
+      drawAssetChart(result.sampleResult);
+    }
+
+    function executeSingleSample() {
+      const settings = getSettingsFromInputs();
+      const errors = validateSettings(settings);
+
+      showErrors(errors);
+
+      if (errors.length > 0) {
+        return;
+      }
+
+      const result = runSingleSimulation(settings);
+
+      elements.successRate.textContent = result.isSuccess ? "100.0%" : "0.0%";
+      elements.failureRate.textContent = result.isSuccess ? "0.0%" : "100.0%";
+      elements.averageFinalAsset.textContent = formatYen(result.finalAsset);
+
+      elements.earliestBankruptYear.textContent =
+        result.bankruptYear === null
+          ? "破綻なし"
+          : result.bankruptYear + "年目";
+
+      elements.summaryText.textContent = result.isSuccess
+        ? "サンプル1回の結果：運用年数終了まで資産が残りました。"
+        : "サンプル1回の結果：" + result.bankruptYear + "年目で資産が0円以下になりました。";
+
+      renderTable(result);
+      drawAssetChart(result);
+    }
+
+    function resetInputs() {
+      Object.keys(DEFAULT_VALUES).forEach(function(key) {
+        elements[key].value = DEFAULT_VALUES[key];
+      });
+
+      showErrors([]);
+    }
+
+    function clearResults() {
+      elements.successRate.textContent = "-";
+      elements.failureRate.textContent = "-";
+      elements.averageFinalAsset.textContent = "-";
+      elements.earliestBankruptYear.textContent = "-";
+      elements.summaryText.textContent = "まだ実行されていません。";
+
+      elements.resultTableBody.innerHTML =
+        "<tr><td colspan='9' style='text-align:center;'>まだ結果はありません。</td></tr>";
+
+      drawAssetChart(null);
+      showErrors([]);
+    }
+
+    // ボタンに処理を割り当てます。
+    elements.runButton.addEventListener("click", executeMonteCarlo);
+    elements.sampleButton.addEventListener("click", executeSingleSample);
+    elements.resetButton.addEventListener("click", resetInputs);
+    elements.clearButton.addEventListener("click", clearResults);
+
+    // ページ読み込み時に空のグラフを描きます。
+    drawAssetChart(null);
+  </script>
+</body>
+</html>
