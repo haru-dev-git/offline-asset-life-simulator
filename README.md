@@ -74,6 +74,25 @@ https://haru-dev-git.github.io/offline-asset-life-simulator/
 - CSV出力
 - 破綻年分布グラフ
 - シナリオ比較機能
+- ## 設計・テスト資料
+
+本アプリは、実装前に要件定義・画面設計・計算ロジック・テスト観点を整理したうえで作成しました。
+
+- ./docs/system-design.md
+- ./docs/test-spec.md
+- ## 改善履歴
+
+### v1.0
+- HTML / CSS / JavaScriptのみで動くMVPを作成
+- 入力フォーム、入力値チェック、シミュレーション処理を実装
+- 成功率、破綻率、平均最終資産、破綻年を表示
+- 年次テーブルと簡易グラフを追加
+- GitHub Pagesでデモ公開
+- スクリーンショットを追加
+
+### v1.1
+- READMEを整備
+- 設計書とテスト仕様書を追加
 
 ## 注意事項
 
