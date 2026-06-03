@@ -393,6 +393,7 @@
           <button class="btn-secondary" id="sampleButton">サンプル1回だけ実行</button>
           <button class="btn-secondary" id="resetButton">入力値をリセット</button>
           <button class="btn-secondary" id="clearButton">結果をクリア</button>
+          <button class="btn-secondary" id="csvButton">年次結果をCSV出力</button>
         </div>
 
         <div id="errorBox" class="error-box"></div>
@@ -526,6 +527,7 @@
       sampleButton: document.getElementById("sampleButton"),
       resetButton: document.getElementById("resetButton"),
       clearButton: document.getElementById("clearButton"),
+      csvButton: document.getElementById("csvButton"),
 
       errorBox: document.getElementById("errorBox"),
       successRate: document.getElementById("successRate"),
@@ -536,6 +538,14 @@
       resultTableBody: document.getElementById("resultTableBody"),
       assetChart: document.getElementById("assetChart")
     };
+
+    /* =========================================================
+      CSV出力用：直近で画面に表示したサンプル結果を保存します。
+      - シミュレーション実行時は、モンテカルロ内のサンプル1回分を保存
+      - サンプル1回だけ実行時は、その1回分を保存
+      - 結果クリア時は null に戻します
+    ========================================================= */
+    let latestSampleResult = null;
 
     /* =========================================================
       3. 表示用の便利関数
@@ -1039,6 +1049,121 @@
     }
 
     /* =========================================================
+      11. CSV出力機能
+      画面に表示しているサンプル1回分の年次結果をCSVとして保存します。
+    ========================================================= */
+
+    // CSVで使う値を安全な文字列に変換します。
+    // 値の中にカンマやダブルクォーテーションが入っても壊れにくくするため、
+    // 必要に応じてダブルクォーテーションで囲みます。
+    function escapeCsvValue(value) {
+      const stringValue = String(value ?? "");
+
+      if (
+        stringValue.includes(",") ||
+        stringValue.includes('"') ||
+        stringValue.includes("\n") ||
+        stringValue.includes("\r")
+      ) {
+        return '"' + stringValue.replace(/"/g, '""') + '"';
+      }
+
+      return stringValue;
+    }
+
+    // JavaScript内部では 0.05 のような小数で率を持っています。
+    // CSVでは 5 のようなパーセント値にしたいので、100倍して出力します。
+    // 例：0.05 → 5、-0.25 → -25
+    function rateToPercentValue(rate) {
+      if (!Number.isFinite(rate)) return "";
+
+      // 小数誤差を避けるため、いったん小数第10位までに丸めます。
+      // その後、不要な末尾の0を消すために Number() を通します。
+      return Number((rate * 100).toFixed(10));
+    }
+
+    // 金額はExcelなどで扱いやすいように、「円」やカンマを付けず数値だけで出します。
+    // 小数が出る可能性があるため、円単位に丸めています。
+    function yenToCsvNumber(value) {
+      if (!Number.isFinite(value)) return "";
+      return Math.round(value);
+    }
+
+    // 年次結果の配列をCSV文字列に変換します。
+    function convertYearlyResultsToCsv(yearlyResults) {
+      const header = [
+        "年",
+        "年初資産",
+        "生活費",
+        "インフレ状態",
+        "適用インフレ率",
+        "株価状態",
+        "適用リターン",
+        "年末資産",
+        "判定"
+      ];
+
+      const rows = yearlyResults.map(function(row) {
+        return [
+          row.year,
+          yenToCsvNumber(row.startAsset),
+          yenToCsvNumber(row.livingCost),
+          row.inflationState,
+          rateToPercentValue(row.appliedInflationRate),
+          row.stockState,
+          rateToPercentValue(row.appliedReturnRate),
+          yenToCsvNumber(row.endAsset),
+          row.status
+        ];
+      });
+
+      // ヘッダーとデータ行をまとめ、CSV形式の文字列にします。
+      const csvLines = [header].concat(rows).map(function(line) {
+        return line.map(escapeCsvValue).join(",");
+      });
+
+      return csvLines.join("\r\n");
+    }
+
+    // CSV文字列をブラウザからダウンロードさせます。
+    function downloadCsv(csvText, fileName) {
+      // Excelで日本語が文字化けしにくいよう、BOMを先頭に付けます。
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csvText], {
+        type: "text/csv;charset=utf-8;"
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+
+      // 使い終わった一時URLとリンク要素を片付けます。
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // CSV出力ボタンを押したときの処理です。
+    function exportYearlyResultsCsv() {
+      if (
+        latestSampleResult === null ||
+        !latestSampleResult.yearlyResults ||
+        latestSampleResult.yearlyResults.length === 0
+      ) {
+        showErrors(["CSV出力する結果がありません。先にシミュレーションを実行してください。"]);
+        return;
+      }
+
+      showErrors([]);
+
+      const csvText = convertYearlyResultsToCsv(latestSampleResult.yearlyResults);
+      downloadCsv(csvText, "asset-simulation-result.csv");
+    }
+
+    /* =========================================================
       11. ボタン処理
     ========================================================= */
 
@@ -1053,6 +1178,9 @@
       }
 
       const result = runMonteCarlo(settings);
+
+      // CSV出力で使えるように、画面表示用のサンプル結果を保存します。
+      latestSampleResult = result.sampleResult;
 
       renderSummary(result, settings);
       renderTable(result.sampleResult);
@@ -1070,6 +1198,9 @@
       }
 
       const result = runSingleSimulation(settings);
+
+      // CSV出力で使えるように、サンプル1回分の結果を保存します。
+      latestSampleResult = result;
 
       elements.successRate.textContent = result.isSuccess ? "100.0%" : "0.0%";
       elements.failureRate.textContent = result.isSuccess ? "0.0%" : "100.0%";
@@ -1106,6 +1237,9 @@
       elements.resultTableBody.innerHTML =
         "<tr><td colspan='9' style='text-align:center;'>まだ結果はありません。</td></tr>";
 
+      // 結果をクリアしたら、CSV出力対象も空にします。
+      latestSampleResult = null;
+
       drawAssetChart(null);
       showErrors([]);
     }
@@ -1115,6 +1249,7 @@
     elements.sampleButton.addEventListener("click", executeSingleSample);
     elements.resetButton.addEventListener("click", resetInputs);
     elements.clearButton.addEventListener("click", clearResults);
+    elements.csvButton.addEventListener("click", exportYearlyResultsCsv);
 
     // ページ読み込み時に空のグラフを描きます。
     drawAssetChart(null);
