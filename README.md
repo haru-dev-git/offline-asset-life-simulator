@@ -29,6 +29,7 @@ https://haru-dev-git.github.io/offline-asset-life-simulator/
 - 成功率・破綻率・平均最終資産の表示
 - 破綻年の表示
 - 年次テーブルの表示
+- 年次結果のCSV出力
 - Canvasによる簡易グラフ表示
 - 入力値チェックとエラーメッセージ表示
 
@@ -71,7 +72,6 @@ https://haru-dev-git.github.io/offline-asset-life-simulator/
 - 為替バイアスの追加
 - ガードレール戦略の追加
 - 感度分析機能
-- CSV出力
 - 破綻年分布グラフ
 - シナリオ比較機能
 - ## 設計・テスト資料
@@ -93,6 +93,11 @@ https://haru-dev-git.github.io/offline-asset-life-simulator/
 ### v1.1
 - READMEを整備
 - 設計書とテスト仕様書を追加
+
+### v1.2
+- 年次結果のCSV出力機能を追加
+- CSVをExcelで開いた際に文字化けしにくいよう、BOM付きUTF-8で出力
+- シミュレーション未実行時のCSV出力エラーを追加
 
 ## 注意事項
 
